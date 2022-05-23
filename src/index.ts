@@ -23,8 +23,6 @@ client.on("messageCreate", async (message: Message) => {
   const urls = matchUrls(message.content);
 
   if (urls.length > 0 && isValidUrl(urls[0])) {
-    console.log("Valid message!");
-
     const title = await getUrlTitle(urls[0]);
 
     message.startThread({
