@@ -34,8 +34,6 @@ client.on("messageCreate", async (message: Message) => {
     });
 
     console.log(`Created thread for ${message.content}`);
-  } else {
-    message.delete();
   }
 });
 
