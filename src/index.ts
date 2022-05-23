@@ -4,7 +4,6 @@ dotenv.config();
 import { Client, Intents } from "discord.js";
 import type { Message } from "discord.js";
 import fetch from "node-fetch";
-import htmlparser2 from "htmlparser2";
 
 import validUrls from "./urls";
 
@@ -21,28 +20,41 @@ client.on("messageCreate", async (message: Message) => {
 
   if (message.channelId !== process.env.VID_CHANNEL_ID) return;
 
-  if (validUrl(message.content)) {
+  const urls = matchUrls(message.content);
+
+  if (urls.length > 0 && isValidUrl(urls[0])) {
     console.log("Valid message!");
 
-    const title = await getUrlTitle(message.content);
+    const title = await getUrlTitle(urls[0]);
 
-    console.log(title);
+    message.startThread({
+      name: title || `New TAS by ${message.author.tag}`,
+      autoArchiveDuration: "MAX",
+      reason: `New TAS by ${message.author.tag}`,
+    });
+
+    console.log(`Created thread for ${message.content}`);
   } else {
     message.delete();
   }
 });
 
-function validUrl(messageUrl: string): boolean {
-  try {
-    const url = new URL(messageUrl);
-    const hostname = url.hostname;
+// Match all URLs present in the message.
+function matchUrls(content: string) {
+  const matches = content.match(/(((https?:\/\/)|(www\.))[^\s]+)/g);
 
-    return validUrls.has(hostname);
-  } catch (e) {
-    return false;
-  }
+  return matches || [];
 }
 
+// Determine if the URL posted is present in the allow list.
+function isValidUrl(messageUrl: string): boolean {
+  const url = new URL(messageUrl);
+  const hostname = url.hostname;
+
+  return validUrls.has(hostname);
+}
+
+// Fetch the HTML content of the video page to determine the title.
 async function getUrlTitle(url: string): Promise<string> {
   const res = await fetch(url);
   const html = await res.text();
@@ -53,7 +65,7 @@ async function getUrlTitle(url: string): Promise<string> {
     return title[1]; // returns the title without html tags around it
   }
 
-  return "New TAS video!";
+  return "";
 }
 
 // Login to Discord with your client's token
