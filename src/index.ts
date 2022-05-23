@@ -29,7 +29,7 @@ client.on("messageCreate", async (message: Message) => {
 
     message.startThread({
       name: title || `New TAS by ${message.author.tag}`,
-      autoArchiveDuration: "MAX",
+      autoArchiveDuration: 1440, // one day
       reason: `New TAS by ${message.author.tag}`,
     });
 
