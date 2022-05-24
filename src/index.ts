@@ -25,11 +25,17 @@ client.on("messageCreate", async (message: Message) => {
   if (urls.length > 0 && isValidUrl(urls[0])) {
     const title = await getUrlTitle(urls[0]);
 
-    message.startThread({
-      name: title || `New TAS by ${message.author.tag}`,
-      autoArchiveDuration: 1440, // one day
-      reason: `New TAS by ${message.author.tag}`,
-    });
+    try {
+
+      message.startThread({
+        name: title || `New TAS by ${message.author.tag}`,
+        autoArchiveDuration: 1440, // one day
+        reason: `New TAS by ${message.author.tag}`,
+      });
+    } catch (err) {
+      console.error(`Unable to start thread for ${message.content}`);
+      console.error(err);
+    }
 
     console.log(`Created thread for ${message.content}`);
   }
