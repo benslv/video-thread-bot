@@ -62,10 +62,18 @@ async function getUrlTitle(url: string): Promise<string> {
   const title = html.match(/<title>(.*)<\/title>/i);
 
   if (title) {
-    return title[1]; // returns the title without html tags around it
+    // returns the title without html tags around it
+    // and truncates its max length to 100 (max thread title allowed)
+    return truncateString(title[1], 100); 
   }
 
   return "";
+}
+
+function truncateString(string: string, length: number) {
+  if (string.length <= length) return string;
+
+  return string.slice(0, length - 3) + "...";
 }
 
 // Login to Discord with your client's token
