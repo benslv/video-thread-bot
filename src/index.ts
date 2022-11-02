@@ -4,6 +4,7 @@ dotenv.config();
 import { Client, Intents } from "discord.js";
 import type { Message } from "discord.js";
 import fetch from "node-fetch";
+import { TextChannel } from "discord.js";
 
 import validUrls from "./urls";
 
@@ -14,30 +15,49 @@ const client = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_
 client.once("ready", () => {
   console.log("Ready!");
 });
+try {
+  client.on("messageCreate", async (message: Message) => {
+    if (message.author.bot) return;
 
-client.on("messageCreate", async (message: Message) => {
-  if (message.author.bot) return;
+    if (message.channelId !== process.env.VID_CHANNEL_ID) return;
 
-  if (message.channelId !== process.env.VID_CHANNEL_ID) return;
+    const urls = matchUrls(message.content);
+    var hasVideo = false;
+    if (message.attachments.size > 0){
+      message.attachments.forEach(function func(value, key, map){
+        if (value.url.endsWith("mov") || value.url.endsWith("mp4") || value.url.endsWith("webm")){
+          hasVideo = true;
+        }
+      })
+    }
 
-  const urls = matchUrls(message.content);
+    if (urls.length > 0 && isValidUrl(urls[0])) { 
+      const title = await getUrlTitle(urls[0]);
 
-  if (urls.length > 0 && isValidUrl(urls[0])) {
-    const title = await getUrlTitle(urls[0]);
-
-    try {
       message.startThread({
         name: title || `New TAS by ${message.author.tag}`,
         autoArchiveDuration: 1440, // one day
         reason: `New TAS by ${message.author.tag}`,
       });
       console.log(`Created thread for ${message.content}`);
-    } catch (err) {
-      console.error(`Unable to start thread for ${message.content}`);
-      console.error(err);
     }
+
+    if (hasVideo){
+      message.startThread({
+        name: `New TAS by ${message.author.tag}`,
+        autoArchiveDuration: 1440, // one day
+        reason: `New TAS by ${message.author.tag}`,
+      });
+      console.log(`Created thread for video by ${message.author.tag}`);
+    }
+
+  })
+} catch (error) {
+  if (error instanceof Error){
+    console.log(error.message); //log message locally
+    ( client.channels.cache.get('825266321327521793') as TextChannel ).send(error.message); //send on private discord
   }
-});
+}
 
 // Match all URLs present in the message.
 function matchUrls(content: string) {
